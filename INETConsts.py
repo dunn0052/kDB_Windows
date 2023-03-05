@@ -1,6 +1,7 @@
 import struct
 import os
 from enum import Enum
+import db.BASS
 
 # SERVER CONSTS
 
@@ -16,6 +17,7 @@ ACK_FORMAT = INET_HEADER_FORMAT + "I"
 CONNECTION_SIZE = struct.calcsize(CONNECTION_FORMAT)
 INET_HEADER_SIZE = struct.calcsize(INET_HEADER_FORMAT)
 INET_PACKAGE_SIZE = struct.calcsize(INET_PACKAGE_FORMAT)
+ACK_SIZE = struct.calcsize(ACK_FORMAT)
 
 # INET ENVIRONMENT VARIABLES
 
@@ -23,7 +25,7 @@ KDB_INET_ADDRESS_ENV = "KDB_INET_ADDRESS"
 KDB_INET_ADDRESS = os.getenv(KDB_INET_ADDRESS_ENV)
 
 #MESSAGE TYPES
-class MESSAGE_TYPE(Enum):
+class MESSAGE_TYPE:
     NONE = 0
     TEXT = 1
     ACK  = 2
