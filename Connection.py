@@ -1,14 +1,14 @@
-import INETConsts
+import PythonAPI.INETConsts as INETConsts
 import socket
 import struct
 import threading
 import time
 import select
-import db.BASS
-import db.OFRI
+import PythonAPI.db.BASS
+import PythonAPI.db.OFRI
 
 RECV_POLL_WAIT = 5
-INET_ADDRESS = b''
+INET_ADDRESS = b'192.168.56.1'
 INET_PORT = 5000
 
 def packMessage(format, data, data_type):
@@ -48,7 +48,7 @@ def getOFRI(message):
     ofri_data[2] = int(ofri_data[2])
     ofri_data[3] = int(ofri_data[3])
     
-    return packMessage(db.OFRI.OFRI_FORMAT, ofri_data,
+    return packMessage(INETConsts.OFRI_FORMAT, ofri_data,
                        INETConsts.MESSAGE_TYPE.DB)
 
 def sendMessage(sock, recvThread):

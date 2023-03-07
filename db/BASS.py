@@ -1,1 +1,0 @@
-BASS_FORMAT = "@IIII"
