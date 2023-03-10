@@ -5,50 +5,90 @@ import DBConnection
 import PythonAPI.DBMap
 import PythonAPI.INETConsts as INETConsts
 
+CONNECTION_LABEL_ROW = 0
+CONNECTION_ENTRY_ROW = 1
+
+OBJECT_LABEL_ROW = 2
+OBJECT_ENTRY_ROW =  3
+OBJECT_VALUE_ROW = 4
+OBJECT_BUTTON_ROW = 5
+
+COMPONENT_WIDTH = 20
 
 class View(Frame):
     def __init__(self, master:Tk):
         self.master = master
         Frame.__init__(self, self.master)
+        self.connection = None
         master.title = "Remote kDB Viewer"
-        self.connectDB()
         self.initWindow()
         
     def initWindow(self):
+        
+        self.AddressLabel = Label(self.master, text="kDB Address", width=COMPONENT_WIDTH)
+        self.PortLabel = Label(self.master, text="kDB Port", width=COMPONENT_WIDTH)
+        self.AddressValue = StringVar(value=INETConsts.DB_INET_ADDRESS)
+        self.PortValue = StringVar(value=INETConsts.DB_INET_PORT)
+        self.AddressEntry = Entry(self.master, textvariable=self.AddressValue, width=COMPONENT_WIDTH)
+        self.PortEntry = Entry(self.master, textvariable=self.PortValue, width=COMPONENT_WIDTH)
+        
+        self.AddressLabel.grid(column=0, row=CONNECTION_LABEL_ROW)
+        self.PortLabel.grid(column=1, row=CONNECTION_LABEL_ROW)
+        self.AddressEntry.grid(column=0, row=CONNECTION_ENTRY_ROW)
+        self.PortEntry.grid(column=1, row=CONNECTION_ENTRY_ROW)
+        
+        self.ConnectButton = Button(self.master, text="Connect", command=self.connectDB)
+        self.ConnectButton.grid(column=2, row=CONNECTION_ENTRY_ROW)
         
         self.ObjectLabel = Label(self.master, text="OBJECT")
         self.FieldLabel = Label(self.master, text="FIELD")
         self.RecordLabel = Label(self.master, text="RECORD")
         self.IndexLabel = Label(self.master, text="INDEX")
         
-        self.ObjectLabel.grid(column = 0, row = 0)
-        self.FieldLabel.grid(column = 1, row = 0)
-        self.RecordLabel.grid(column = 2, row = 0)
-        self.IndexLabel.grid(column = 3, row = 0)
+        self.ObjectLabel.grid(column = 0, row = OBJECT_LABEL_ROW)
+        self.FieldLabel.grid(column = 1, row = OBJECT_LABEL_ROW)
+        self.RecordLabel.grid(column = 2, row = OBJECT_LABEL_ROW)
+        self.IndexLabel.grid(column = 3, row = OBJECT_LABEL_ROW)
         
         # Set up db entries
         self.entry_values = [StringVar() for _ in range(4)]
-        self.db_entries = [Entry(self.master, width=10, textvariable=self.entry_values[index]) for index in range(4)]
+        self.db_entries = [Entry(self.master, width=COMPONENT_WIDTH, textvariable=self.entry_values[index]) for index in range(4)]
         col_num = 0
         for entry in self.db_entries:
-            entry.grid(column = col_num, row=1)
+            entry.grid(column = col_num, row=OBJECT_ENTRY_ROW)
             col_num += 1
             
-        self.entry_values[0].set("BASS")
-        self.entry_values[1].set("1")
-        self.entry_values[2].set("1")
-        self.entry_values[3].set("1")
+        self.entry_values[0].set("GURPS_CHAR")
+        self.entry_values[1].set("0")
+        self.entry_values[2].set("0")
+        self.entry_values[3].set("0")
         
-        self.getDBButton = Button(self.master, text="Get DB value", command=self.getDBValue, width=10)
-        self.getDBButton.grid(column=0, row=2)
+        self.getDBButton = Button(self.master, text="Get DB value", command=self.getDBValue, width=COMPONENT_WIDTH)
+        self.getDBButton.grid(column=0, row=OBJECT_BUTTON_ROW)
         self.DBValue = StringVar()
-        self.DBValue.set(" = ")
         self.DBLabel = Label(self.master, textvariable=self.DBValue)
-        self.DBLabel.grid(column=5, row=1)
+        self.DBLabel.grid(column=0, row=OBJECT_VALUE_ROW, columnspan=5, sticky = W)
+        
+        self.setDBButton = Button(self.master, text="Set DB value", command=self.setDBValue, width=COMPONENT_WIDTH)
+        self.setDBButton.grid(column=1, row=OBJECT_BUTTON_ROW)
+        self.DBUpdateValue = StringVar()
+        self.DBUpdateValue.set("Enter new value")
+        self.DBValueSet = Entry(self.master, width=COMPONENT_WIDTH, textvariable=self.DBUpdateValue)
+        self.DBValueSet.grid(column=3, row=OBJECT_BUTTON_ROW)
         
 
     def connectDB(self):
-        self.connection = DBConnection.DBConnection(INETConsts.DB_INET_ADDRESS, INETConsts.DB_INET_PORT)
+        if self.connection:
+            self.connection.connect(self.AddressValue.get(), int(self.PortEntry.get()))
+        else:
+            self.connection = DBConnection.DBConnection(self.AddressValue.get(), int(self.PortValue.get()))
+        
+        if self.connection.connected:
+            self.AddressEntry.config(bg='green')
+            self.PortEntry.config(bg='green')
+        else:
+            self.AddressEntry.config(bg='red')
+            self.PortEntry.config(bg='red')
 
     def readOFRIEntries(self):
         o = self.db_entries[0].get()
@@ -65,7 +105,7 @@ class View(Frame):
         
         if obj not in PythonAPI.DBMap.ALL_OBJECTS:
             self.DBLabel.configure(bg='red')
-            self.DBValue.set(" = INVALID")
+            self.DBValue.set("INVALID OFRI")
             return
         
         c_msg = struct.unpack(PythonAPI.DBMap.ALL_OBJECTS[obj].FORMAT, data)
@@ -78,10 +118,19 @@ class View(Frame):
         ofri = self.readOFRIEntries()
         if not any(ofri):
             self.DBLabel.configure(bg='red')
-            self.DBValue.set(" = INVALID")
+            self.DBValue.set("INVALID OFRI")
             return
         
         self.connection.sendOFRI(*ofri)
+        _, db_data = self.connection.recv()
+        self.showDBValue(db_data, ofri[0])
+    
+    def setDBValue(self):
+        ofri = self.readOFRIEntries()
+        if not any(ofri):
+            return
+        
+        self.connection.updateOFRI(*ofri, self.DBUpdateValue.get())
         _, db_data = self.connection.recv()
         self.showDBValue(db_data, ofri[0])
 
