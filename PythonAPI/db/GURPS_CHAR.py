@@ -18,4 +18,5 @@ class GURPS_CHAR:
 
 
     def __str__(self) -> str:
-        return f"NAME: {self.NAME} ST: {self.ST} DX: {self.DX} IQ: {self.IQ} HT: {self.HT} HP: {self.HP} WILL: {self.WILL} PER: {self.PER} SPD: {self.SPD} MOV: {self.MOV} "
+        name = self.NAME.decode('utf-8').strip('\x00')
+        return f"NAME: { str(name) } ST: {self.ST} DX: {self.DX} IQ: {self.IQ} HT: {self.HT} HP: {self.HP} WILL: {self.WILL} PER: {self.PER} SPD: {self.SPD} MOV: {self.MOV} "

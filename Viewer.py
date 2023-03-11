@@ -103,7 +103,7 @@ class View(Frame):
 
     def showDBValue(self, data, obj):
         
-        if obj not in PythonAPI.DBMap.ALL_OBJECTS:
+        if obj not in PythonAPI.DBMap.ALL_OBJECTS or not data:
             self.DBLabel.configure(bg='red')
             self.DBValue.set("INVALID OFRI")
             return
