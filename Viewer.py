@@ -58,7 +58,7 @@ class View(Frame):
             entry.grid(column = col_num, row=OBJECT_ENTRY_ROW)
             col_num += 1
             
-        self.entry_values[0].set("GURPS_CHAR")
+        self.entry_values[0].set("DCC_CHAR")
         self.entry_values[1].set("0")
         self.entry_values[2].set("0")
         self.entry_values[3].set("0")
@@ -109,7 +109,7 @@ class View(Frame):
             return
         
         c_msg = struct.unpack(PythonAPI.DBMap.ALL_OBJECTS[obj].FORMAT, data)
-        db_obj = PythonAPI.DBMap.ALL_OBJECTS[obj](*c_msg)
+        db_obj = PythonAPI.DBMap.ALL_OBJECTS[obj](c_msg)
         self.DBValue.set(str(db_obj))
         self.DBLabel.configure(bg='green')
 
